@@ -1,61 +1,58 @@
 "use client";
-
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 export default function Appointment() {
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+
   const [form, setForm] = useState({
     name: "",
     phone: "",
     email: "",
+    age: "",
+    service: "",
+    doctor: "",
+    date: "",
+    time: "",
+    notes: "",
+    emergency: false,
   });
 
-  const [errors, setErrors] = useState<any>({});
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-
-  const validate = () => {
-    let newErrors: any = {};
-
-    if (!form.name) newErrors.name = "Name is required";
-    if (!form.phone) newErrors.phone = "Phone is required";
-    if (!form.email) {
-      newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(form.email)) {
-      newErrors.email = "Invalid email";
+  // ✅ NEXT STEP WITH VALIDATION
+  const next = () => {
+    if (step === 1) {
+      if (!form.name || !form.phone || !form.email) {
+        alert("Please fill all required fields");
+        return;
+      }
     }
 
-    return newErrors;
+    if (step === 2) {
+      if (!form.service || !form.doctor || !form.date) {
+        alert("Please complete all selections");
+        return;
+      }
+    }
+
+    setStep((prev) => prev + 1);
   };
 
-  const handleSubmit = async (e: any) => {
-    e.preventDefault();
+  const back = () => setStep((prev) => prev - 1);
 
-    const validationErrors = validate();
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
-
+  // ✅ SUBMIT
+  const handleSubmit = async () => {
     setLoading(true);
-    setSuccess(false);
 
-    const { error } = await supabase.from("appointments").insert([
-      {
-        name: form.name,
-        phone: form.phone,
-        email: form.email,
-      },
-    ]);
+    const { error } = await supabase.from("appointments").insert([form]);
 
     setLoading(false);
 
     if (error) {
+      alert("Error saving appointment");
       console.error(error);
-      alert("Error saving data");
     } else {
-      setSuccess(true);
-      setForm({ name: "", phone: "", email: "" });
+      setStep(5); // success screen
     }
   };
 
@@ -65,71 +62,205 @@ export default function Appointment() {
         Book Appointment
       </h1>
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+      {step <= 4 && (
+        <p className="text-center mt-2 text-gray-500">
+          Step {step} of 4
+        </p>
+      )}
 
-        {/* Name */}
-        <div>
-          <input
-            type="text"
-            placeholder="Full Name"
-            value={form.name}
-            className="w-full p-3 border rounded-lg"
-            onChange={(e) =>
-              setForm({ ...form, name: e.target.value })
-            }
-          />
-          {errors.name && (
-            <p className="text-red-500 text-sm">{errors.name}</p>
-          )}
-        </div>
+      <div className="mt-8 space-y-4">
 
-        {/* Phone */}
-        <div>
-          <input
-            type="text"
-            placeholder="Phone Number"
-            value={form.phone}
-            className="w-full p-3 border rounded-lg"
-            onChange={(e) =>
-              setForm({ ...form, phone: e.target.value })
-            }
-          />
-          {errors.phone && (
-            <p className="text-red-500 text-sm">{errors.phone}</p>
-          )}
-        </div>
+        {/* STEP 1 */}
+        {step === 1 && (
+          <>
+            <input
+              placeholder="Full Name"
+              className="w-full p-3 border rounded-lg"
+              onChange={(e) =>
+                setForm({ ...form, name: e.target.value })
+              }
+            />
 
-        {/* Email */}
-        <div>
-          <input
-            type="email"
-            placeholder="Email"
-            value={form.email}
-            className="w-full p-3 border rounded-lg"
-            onChange={(e) =>
-              setForm({ ...form, email: e.target.value })
-            }
-          />
-          {errors.email && (
-            <p className="text-red-500 text-sm">{errors.email}</p>
-          )}
-        </div>
+            <input
+              placeholder="Phone"
+              className="w-full p-3 border rounded-lg"
+              onChange={(e) =>
+                setForm({ ...form, phone: e.target.value })
+              }
+            />
 
-        {/* Button */}
-        <button
-          disabled={loading}
-          className="w-full bg-teal-600 text-white py-3 rounded-lg hover:bg-teal-700 transition disabled:opacity-50"
-        >
-          {loading ? "Submitting..." : "Submit"}
-        </button>
+            <input
+              placeholder="Email"
+              className="w-full p-3 border rounded-lg"
+              onChange={(e) =>
+                setForm({ ...form, email: e.target.value })
+              }
+            />
 
-        {/* Success Message */}
-        {success && (
-          <p className="text-green-600 text-center mt-4">
-            Appointment booked successfully!
-          </p>
+            <input
+              placeholder="Age"
+              className="w-full p-3 border rounded-lg"
+              onChange={(e) =>
+                setForm({ ...form, age: e.target.value })
+              }
+            />
+
+            <button
+              disabled={!form.name || !form.phone || !form.email}
+              onClick={next}
+              className="w-full bg-teal-600 text-white py-3 rounded-lg disabled:bg-gray-400"
+            >
+              Next
+            </button>
+          </>
         )}
-      </form>
+
+        {/* STEP 2 */}
+        {step === 2 && (
+          <>
+            <select
+              className="w-full p-3 border rounded-lg"
+              onChange={(e) =>
+                setForm({ ...form, service: e.target.value })
+              }
+            >
+              <option value="">Select Service</option>
+              <option>Root Canal</option>
+              <option>Dental Implants</option>
+              <option>Teeth Whitening</option>
+            </select>
+
+            <select
+              className="w-full p-3 border rounded-lg"
+              onChange={(e) =>
+                setForm({ ...form, doctor: e.target.value })
+              }
+            >
+              <option value="">Select Doctor</option>
+              <option>Dr. Arjun</option>
+              <option>Dr. Priya</option>
+              <option>Dr. Karthik</option>
+            </select>
+
+            <input
+              type="date"
+              min={new Date().toISOString().split("T")[0]}
+              className="w-full p-3 border rounded-lg"
+              onChange={(e) =>
+                setForm({ ...form, date: e.target.value })
+              }
+            />
+
+            <input
+              type="time"
+              className="w-full p-3 border rounded-lg"
+              onChange={(e) =>
+                setForm({ ...form, time: e.target.value })
+              }
+            />
+
+            <div className="flex gap-4">
+              <button
+                onClick={back}
+                className="w-1/2 bg-gray-400 text-white py-3 rounded-lg"
+              >
+                Back
+              </button>
+
+              <button
+                disabled={!form.service || !form.doctor || !form.date}
+                onClick={next}
+                className="w-1/2 bg-teal-600 text-white py-3 rounded-lg disabled:bg-gray-400"
+              >
+                Next
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* STEP 3 */}
+        {step === 3 && (
+          <>
+            <textarea
+              placeholder="Describe your problem"
+              className="w-full p-3 border rounded-lg"
+              onChange={(e) =>
+                setForm({ ...form, notes: e.target.value })
+              }
+            />
+
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                onChange={(e) =>
+                  setForm({ ...form, emergency: e.target.checked })
+                }
+              />
+              Emergency Case
+            </label>
+
+            <div className="flex gap-4">
+              <button
+                onClick={back}
+                className="w-1/2 bg-gray-400 text-white py-3 rounded-lg"
+              >
+                Back
+              </button>
+
+              <button
+                onClick={next}
+                className="w-1/2 bg-teal-600 text-white py-3 rounded-lg"
+              >
+                Next
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* STEP 4 */}
+        {step === 4 && (
+          <>
+            <div className="p-4 border rounded-lg">
+              <p><b>Name:</b> {form.name}</p>
+              <p><b>Phone:</b> {form.phone}</p>
+              <p><b>Email:</b> {form.email}</p>
+              <p><b>Service:</b> {form.service}</p>
+              <p><b>Doctor:</b> {form.doctor}</p>
+              <p><b>Date:</b> {form.date}</p>
+              <p><b>Time:</b> {form.time}</p>
+            </div>
+
+            <div className="flex gap-4">
+              <button
+                onClick={back}
+                className="w-1/2 bg-gray-400 text-white py-3 rounded-lg"
+              >
+                Back
+              </button>
+
+              <button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="w-1/2 bg-green-600 text-white py-3 rounded-lg disabled:bg-gray-400"
+              >
+                {loading ? "Submitting..." : "Confirm"}
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* STEP 5 SUCCESS */}
+        {step === 5 && (
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-green-600">
+              🎉 Appointment Confirmed!
+            </h2>
+            <p className="mt-4 text-gray-600">
+              We will contact you shortly.
+            </p>
+          </div>
+        )}
+      </div>
     </main>
   );
 }
