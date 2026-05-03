@@ -16,6 +16,9 @@ A full-stack dental clinic website built with Next.js and Supabase.
 - Supabase
 - Framer Motion
 
+## 📸 Screenshots
+![Home](./public/screenshots/home.png)
+
 ## 🌐 Live Demo
 https://smilecraft-dental-sand.vercel.app
 
